@@ -1,38 +1,50 @@
-import { chromium } from 'playwright';
+import * as cheerio from 'cheerio';
 
 export async function scrapeLinkedInJobs(keyword: string, location: string) {
-  const browser = await chromium.launch({ headless: true });
-  const context = await browser.newContext();
-  const page = await context.newPage();
-
   try {
     const url = `https://www.linkedin.com/jobs/search?keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(location)}`;
-    await page.goto(url, { waitUntil: 'networkidle' });
-
-    await page.waitForSelector('.job-search-card', { timeout: 10000 }).catch(() => null);
-
-    const jobs = await page.$$eval('.job-search-card', cards => {
-      return cards.slice(0, 15).map(card => {
-        const titleEl = card.querySelector('.base-search-card__title');
-        const companyEl = card.querySelector('.base-search-card__subtitle');
-        const locationEl = card.querySelector('.job-search-card__location');
-        const linkEl = card.querySelector('.base-card__full-link') as HTMLAnchorElement;
-
-        return {
-          title: titleEl?.textContent?.trim() || '',
-          company: companyEl?.textContent?.trim() || '',
-          location: locationEl?.textContent?.trim() || '',
-          url: linkEl?.href || '',
-          platform: 'LinkedIn'
-        };
-      });
+    const res = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5'
+      }
     });
 
-    await browser.close();
-    return jobs.filter(j => j.title && j.url);
+    if (!res.ok) {
+      throw new Error(`Failed to fetch LinkedIn jobs: ${res.status}`);
+    }
+
+    const html = await res.text();
+    const $ = cheerio.load(html);
+    const jobs: any[] = [];
+
+    $('.job-search-card').each((_, element) => {
+      const titleEl = $(element).find('.base-search-card__title');
+      const companyEl = $(element).find('.base-search-card__subtitle');
+      const locationEl = $(element).find('.job-search-card__location');
+      const linkEl = $(element).find('.base-card__full-link');
+
+      const title = titleEl.text().trim();
+      const company = companyEl.text().trim();
+      const jobLocation = locationEl.text().trim();
+      const url = linkEl.attr('href') || '';
+
+      if (title && url) {
+        jobs.push({
+          title,
+          company,
+          location: jobLocation,
+          url,
+          platform: 'LinkedIn'
+        });
+      }
+    });
+
+    return jobs.slice(0, 15);
   } catch (err) {
     console.error('LinkedIn Scraper Error:', err);
-    await browser.close();
     return [];
   }
 }
+
