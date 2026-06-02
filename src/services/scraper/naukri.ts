@@ -1,3 +1,7 @@
+function normalizeText(value: string) {
+  return value.replace(/â€“/g, '-').replace(/â/g, "'").replace(/\s+/g, ' ').trim();
+}
+
 export async function scrapeNaukriJobs(keyword: string, location: string) {
   try {
     const url = 'https://www.arbeitnow.com/api/job-board-api';
@@ -15,9 +19,9 @@ export async function scrapeNaukriJobs(keyword: string, location: string) {
         return titleMatch || descMatch || tagsMatch;
       })
       .map((job: any) => ({
-        title: job.title || '',
-        company: job.company_name || '',
-        location: job.location || '',
+        title: normalizeText(job.title || ''),
+        company: normalizeText(job.company_name || ''),
+        location: normalizeText(job.location || ''),
         url: job.url || '',
         platform: 'Arbeitnow'
       }));
@@ -28,4 +32,3 @@ export async function scrapeNaukriJobs(keyword: string, location: string) {
     return [];
   }
 }
-

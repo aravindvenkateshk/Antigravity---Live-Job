@@ -6,20 +6,21 @@ export interface Job {
   url: string;
   location?: string;
   company?: string;
+  platform?: string;
 }
 
 /**
  * Fetch jobs from configured sources and return an array of Job objects.
  * In a full implementation this would also persist jobs to the Prisma DB.
  */
-export async function fetchAndStoreJobs(): Promise<Job[]> {
+export async function fetchAndStoreJobs(keyword?: string, location?: string): Promise<Job[]> {
   // Default search parameters – can be overridden via env vars or a future UI.
-  const keyword = process.env.DEFAULT_JOB_KEYWORD || 'cybersecurity';
-  const location = process.env.DEFAULT_JOB_LOCATION || 'India';
+  const searchKeyword = keyword || process.env.DEFAULT_JOB_KEYWORD || 'cybersecurity';
+  const searchLocation = location || process.env.DEFAULT_JOB_LOCATION || 'India';
 
   const [linkedinJobs, naukriJobs] = await Promise.all([
-    scrapeLinkedInJobs(keyword, location),
-    scrapeNaukriJobs(keyword, location),
+    scrapeLinkedInJobs(searchKeyword, searchLocation),
+    scrapeNaukriJobs(searchKeyword, searchLocation),
   ]);
 
   const allJobs: Job[] = [...linkedinJobs, ...naukriJobs];

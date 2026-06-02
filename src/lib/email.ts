@@ -21,7 +21,7 @@ export async function sendJobNotification(jobs: Job[]) {
 
 function generateHtml(jobs: Job[]) {
   const items = jobs
-    .map(j => `<li><a href="${j.url}">${j.title}</a>${j.location ? ' – ' + j.location : ''}</li>`)
+    .map(j => `<li><a href="${j.url}">${j.title}</a>${j.location ? ' - ' + j.location : ''}</li>`)
     .join('');
   return `<p>Hello,</p><p>We've found new job listings that match your resume:</p><ul>${items}</ul>`;
 }

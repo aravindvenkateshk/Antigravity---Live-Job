@@ -31,7 +31,7 @@ export default function ResumeUploader({ onUploadSuccess }: { onUploadSuccess: (
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || 'Failed to upload');
       
-      onUploadSuccess(json.data);
+      onUploadSuccess({ ...json.data, rawText: json.rawText });
     } catch (err: any) {
       setError(err.message);
     } finally {

@@ -1,5 +1,9 @@
 import * as cheerio from 'cheerio';
 
+function normalizeText(value: string) {
+  return value.replace(/â€“/g, '-').replace(/â/g, "'").replace(/\s+/g, ' ').trim();
+}
+
 export async function scrapeLinkedInJobs(keyword: string, location: string) {
   try {
     const url = `https://www.linkedin.com/jobs/search?keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(location)}`;
@@ -25,9 +29,9 @@ export async function scrapeLinkedInJobs(keyword: string, location: string) {
       const locationEl = $(element).find('.job-search-card__location');
       const linkEl = $(element).find('.base-card__full-link');
 
-      const title = titleEl.text().trim();
-      const company = companyEl.text().trim();
-      const jobLocation = locationEl.text().trim();
+      const title = normalizeText(titleEl.text());
+      const company = normalizeText(companyEl.text());
+      const jobLocation = normalizeText(locationEl.text());
       const url = linkEl.attr('href') || '';
 
       if (title && url) {
@@ -47,4 +51,3 @@ export async function scrapeLinkedInJobs(keyword: string, location: string) {
     return [];
   }
 }
-
