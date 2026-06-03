@@ -4,7 +4,7 @@ import { GoogleGenAI } from "@google/genai";
 
 export async function POST(req: NextRequest) {
   try {
-    const { jobUrl, jobDescription, profileData } = await req.json();
+    const { jobUrl, jobDescription, profileData, applyMode = 'Semi-Auto' } = await req.json();
 
     if (!jobUrl || !profileData) {
       return NextResponse.json({ error: "Missing jobUrl or profileData" }, { status: 400 });
@@ -21,7 +21,9 @@ export async function POST(req: NextRequest) {
     const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
     const coverLetter = response.text;
 
-    const result = await attemptAutoApply(jobUrl, profileData);
+    const result = applyMode === 'Full-Auto'
+      ? await attemptAutoApply(jobUrl, profileData)
+      : { success: true, message: "Cover letter prepared. Open the live job link to apply." };
 
     return NextResponse.json({
       success: result.success,

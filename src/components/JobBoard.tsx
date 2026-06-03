@@ -28,6 +28,7 @@ export default function JobBoard({ jobs, profileData }: { jobs: any[], profileDa
           jobUrl: job.url,
           jobDescription: [job.title, job.company, job.location].filter(Boolean).join('\n'),
           profileData,
+          applyMode,
         }),
       });
       const json = await res.json();
