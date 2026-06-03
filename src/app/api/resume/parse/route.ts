@@ -1,11 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
-import { createRequire } from "module";
-
-export const runtime = "nodejs";
-
-const require = createRequire(import.meta.url);
-const { PDFParse } = require("pdf-parse");
+import pdf from "pdf-parse";
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,9 +16,8 @@ export async function POST(req: NextRequest) {
 
     let resumeText = "";
     try {
-      const parser = new PDFParse({ data: buffer });
-      const result = await parser.getText();
-      resumeText = result.text;
+      const data = await pdf(buffer);
+      resumeText = data.text;
     } catch (err: any) {
       console.error("Error parsing PDF:", err);
       return NextResponse.json({ error: "Failed to parse PDF file: " + err.message }, { status: 400 });
