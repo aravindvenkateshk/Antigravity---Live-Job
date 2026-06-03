@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
+// @ts-ignore - The types for pdf-parse are outdated compared to the 2.4.5 version used
 import { PDFParse } from "pdf-parse";
 
 export async function POST(req: NextRequest) {
