@@ -20,8 +20,8 @@ export async function POST(req: NextRequest) {
         Job Description: ${jobDescription || 'Not provided'}
         Output only the cover letter text.
       `;
-      // Use 1.5-flash as it is more stable/available than 2.5-flash if it was throwing 503
-      const response = await ai.models.generateContent({ model: 'gemini-1.5-flash', contents: prompt });
+      // Use gemini-2.5-flash
+      const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
       coverLetter = response.text || "Cover letter generation returned empty.";
     } catch (aiError: any) {
       console.error("Gemini Cover Letter Error:", aiError);
