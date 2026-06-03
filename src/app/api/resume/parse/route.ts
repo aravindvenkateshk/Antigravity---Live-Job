@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
-import { PDFParse } from "pdf-parse";
+import { createRequire } from "module";
+
+export const runtime = "nodejs";
+
+const require = createRequire(import.meta.url);
+const { PDFParse } = require("pdf-parse");
 
 export async function POST(req: NextRequest) {
   try {
