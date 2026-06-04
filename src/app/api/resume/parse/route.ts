@@ -21,7 +21,9 @@ export async function POST(req: NextRequest) {
 
     let resumeText = "";
     try {
-      resumeText = await extractPdfText(buffer);
+      const pdfParse = require("pdf-parse");
+      const result = await pdfParse(buffer);
+      resumeText = result.text;
     } catch (err: any) {
       console.error("Error parsing PDF:", err);
       return NextResponse.json({ error: "Failed to parse PDF file: " + err.message }, { status: 400 });
@@ -106,41 +108,4 @@ function inferDomain(text: string, skills: string[]) {
   if (skills.some((skill) => ["React", "Next.js", "JavaScript", "TypeScript"].includes(skill))) return "Frontend";
   if (skills.some((skill) => ["Node.js", "Python", "Java", "SQL"].includes(skill))) return "Software Engineering";
   return "General";
-}
-
-async function extractPdfText(buffer: Buffer) {
-  installPdfJsNodePolyfills();
-  const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
-  const loadingTask = pdfjs.getDocument({
-    data: new Uint8Array(buffer),
-    disableWorker: true,
-    useSystemFonts: true,
-  } as any);
-
-  const pdf = await loadingTask.promise;
-  const pages: string[] = [];
-
-  for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {
-    const page = await pdf.getPage(pageNumber);
-    const content = await page.getTextContent();
-    const pageText = content.items
-      .map((item: any) => ("str" in item ? item.str : ""))
-      .join(" ")
-      .trim();
-
-    if (pageText) pages.push(pageText);
-  }
-
-  return pages.join("\n\n");
-}
-
-function installPdfJsNodePolyfills() {
-  if (typeof globalThis.DOMMatrix !== "undefined") return;
-
-  try {
-    const { DOMMatrix, ImageData, Path2D } = require("@napi-rs/canvas");
-    Object.assign(globalThis, { DOMMatrix, ImageData, Path2D });
-  } catch (error) {
-    console.warn("Could not install PDF.js canvas polyfills:", error);
-  }
 }
