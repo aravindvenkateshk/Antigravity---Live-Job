@@ -6,7 +6,6 @@ export const runtime = "nodejs";
 export const maxDuration = 30;
 
 const require = createRequire(import.meta.url);
-const { PDFParse } = require("pdf-parse");
 
 export async function POST(req: NextRequest) {
   try {
@@ -22,6 +21,7 @@ export async function POST(req: NextRequest) {
 
     let resumeText = "";
     try {
+      const { PDFParse } = require("pdf-parse");
       const parser = new PDFParse({ data: buffer });
       const result = await parser.getText();
       resumeText = result.text;
