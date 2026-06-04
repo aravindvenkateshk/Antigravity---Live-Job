@@ -21,6 +21,7 @@ export async function POST(req: NextRequest) {
 
     let resumeText = "";
     try {
+      installPdfJsNodePolyfills();
       const { PDFParse } = require("pdf-parse");
       const parser = new PDFParse({ data: buffer });
       const result = await parser.getText();
@@ -109,4 +110,15 @@ function inferDomain(text: string, skills: string[]) {
   if (skills.some((skill) => ["React", "Next.js", "JavaScript", "TypeScript"].includes(skill))) return "Frontend";
   if (skills.some((skill) => ["Node.js", "Python", "Java", "SQL"].includes(skill))) return "Software Engineering";
   return "General";
+}
+
+function installPdfJsNodePolyfills() {
+  if (typeof globalThis.DOMMatrix !== "undefined") return;
+
+  try {
+    const { DOMMatrix, ImageData, Path2D } = require("@napi-rs/canvas");
+    Object.assign(globalThis, { DOMMatrix, ImageData, Path2D });
+  } catch (error) {
+    console.warn("Could not install PDF.js canvas polyfills:", error);
+  }
 }
