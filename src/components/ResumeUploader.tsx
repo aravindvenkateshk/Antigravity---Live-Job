@@ -28,7 +28,7 @@ export default function ResumeUploader({ onUploadSuccess }: { onUploadSuccess: (
         method: 'POST',
         body: formData,
       });
-      const json = await res.json();
+      const json = await parseApiResponse(res);
       if (!res.ok) throw new Error(json.error || 'Failed to upload');
       
       onUploadSuccess({ ...json.data, rawText: json.rawText });
@@ -97,5 +97,19 @@ export default function ResumeUploader({ onUploadSuccess }: { onUploadSuccess: (
         )}
       </button>
     </motion.div>
+  );
+}
+
+async function parseApiResponse(res: Response) {
+  const contentType = res.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    return res.json();
+  }
+
+  const text = await res.text();
+  throw new Error(
+    text.includes('<!DOCTYPE')
+      ? 'The server returned an HTML error page. Check the Vercel function logs and environment variables.'
+      : text || 'The server returned an invalid response.'
   );
 }

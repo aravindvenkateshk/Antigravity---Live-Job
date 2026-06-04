@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { attemptAutoApply } from "@/services/auto-apply/engine";
-import { GoogleGenAI } from "@google/genai";
+import { generateGeminiContent } from "@/lib/gemini";
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,7 +12,6 @@ export async function POST(req: NextRequest) {
 
     let coverLetter = "Cover letter generation failed or skipped.";
     try {
-      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
       const prompt = `
         Write a concise, professional cover letter tailored for this job.
         Candidate Name: ${profileData.name || 'Candidate'}
@@ -20,8 +19,7 @@ export async function POST(req: NextRequest) {
         Job Description: ${jobDescription || 'Not provided'}
         Output only the cover letter text.
       `;
-      // Use gemini-2.5-flash
-      const response = await ai.models.generateContent({ model: 'gemini-2.5-flash', contents: prompt });
+      const response = await generateGeminiContent(prompt);
       coverLetter = response.text || "Cover letter generation returned empty.";
     } catch (aiError: any) {
       console.error("Gemini Cover Letter Error:", aiError);

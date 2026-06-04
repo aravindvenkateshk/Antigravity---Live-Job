@@ -1,7 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
-// @ts-ignore - The types for pdf-parse are outdated compared to the 2.4.5 version used
-import { PDFParse } from "pdf-parse";
+import { createRequire } from "module";
+import { generateGeminiContent } from "@/lib/gemini";
+
+export const runtime = "nodejs";
+export const maxDuration = 30;
+
+const require = createRequire(import.meta.url);
+const { PDFParse } = require("pdf-parse");
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,8 +35,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No text found in PDF" }, { status: 400 });
     }
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
-    
     const prompt = `
       You are an expert technical recruiter and AI resume parser. 
       Analyze the following resume text and extract the following details in a strict JSON format. 
@@ -49,32 +52,61 @@ export async function POST(req: NextRequest) {
       ${resumeText}
     `;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: prompt,
-      config: {
-        responseMimeType: "application/json",
-      }
-    });
-
-    const aiText = response.text;
-    if (!aiText) throw new Error("No response from AI");
-
-    let parsedData;
     try {
-      parsedData = JSON.parse(aiText);
-    } catch (e) {
-      console.error("Failed to parse Gemini JSON output:", e);
-      return NextResponse.json({ error: "Failed to parse AI output" }, { status: 500 });
-    }
+      const response = await generateGeminiContent(prompt, {
+        responseMimeType: "application/json",
+      });
 
-    return NextResponse.json({
-      success: true,
-      data: parsedData,
-      rawText: resumeText
-    });
+      const parsedData = parseJsonResponse(response.text);
+
+      return NextResponse.json({
+        success: true,
+        data: parsedData,
+        rawText: resumeText,
+        model: response.model,
+      });
+    } catch (aiError: any) {
+      console.error("Gemini resume analysis failed:", aiError);
+      return NextResponse.json({
+        success: true,
+        data: buildFallbackProfile(resumeText),
+        rawText: resumeText,
+        warning: aiError.message || "Gemini analysis failed; used basic local parsing instead.",
+      });
+    }
   } catch (error: any) {
     console.error("API Route Error:", error);
     return NextResponse.json({ error: error.message || "Internal Server Error" }, { status: 500 });
   }
+}
+
+function parseJsonResponse(text: string) {
+  const cleaned = text.replace(/^```json\s*/i, "").replace(/^```\s*/i, "").replace(/```$/i, "").trim();
+  return JSON.parse(cleaned);
+}
+
+function buildFallbackProfile(resumeText: string) {
+  const knownSkills = [
+    "JavaScript", "TypeScript", "React", "Next.js", "Node.js", "Python", "Java",
+    "SQL", "AWS", "Azure", "Docker", "Kubernetes", "Linux", "Cybersecurity",
+    "Security", "SIEM", "SOC", "Vulnerability", "Networking", "Incident Response"
+  ];
+  const lower = resumeText.toLowerCase();
+  const skills = knownSkills.filter((skill) => lower.includes(skill.toLowerCase()));
+  const yearsMatch = lower.match(/(\d+)\+?\s*(years|yrs)/);
+  const years = yearsMatch ? Number(yearsMatch[1]) : 0;
+
+  return {
+    skills,
+    experienceLevel: years >= 6 ? "Senior" : years >= 2 ? "Mid" : "Entry",
+    domainExpertise: inferDomain(lower, skills),
+    atsScore: Math.min(88, Math.max(55, 60 + skills.length * 3 + Math.min(years, 8))),
+  };
+}
+
+function inferDomain(text: string, skills: string[]) {
+  if (text.includes("security") || text.includes("soc") || text.includes("vulnerability")) return "Cybersecurity";
+  if (skills.some((skill) => ["React", "Next.js", "JavaScript", "TypeScript"].includes(skill))) return "Frontend";
+  if (skills.some((skill) => ["Node.js", "Python", "Java", "SQL"].includes(skill))) return "Software Engineering";
+  return "General";
 }
