@@ -19,7 +19,7 @@ export default function Home() {
       const res = await fetch('/api/jobs/fetch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword, location: "India" })
+        body: JSON.stringify({ keyword, location: "India", notificationEmail: data.email })
       });
       const json = await res.json();
       if (json.success) setJobs(json.data);

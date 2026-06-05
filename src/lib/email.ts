@@ -7,11 +7,15 @@ interface Job {
   company?: string;
 }
 
-export async function sendJobNotification(jobs: Job[]) {
+export async function sendJobNotification(jobs: Job[], recipientEmail: string) {
+  if (!recipientEmail) {
+    throw new Error('No recipient email configured.');
+  }
+
   sgMail.setApiKey(process.env.SENDGRID_API_KEY!);
   const html = generateHtml(jobs);
   const msg = {
-    to: process.env.USER_NOTIFICATION_EMAIL!,
+    to: recipientEmail,
     from: process.env.SENDGRID_SENDER_EMAIL!,
     subject: 'New Jobs Matching Your Profile',
     html,

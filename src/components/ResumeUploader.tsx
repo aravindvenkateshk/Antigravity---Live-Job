@@ -1,10 +1,11 @@
 'use client';
 import { useState } from 'react';
-import { UploadCloud, CheckCircle2, Loader2, AlertCircle } from 'lucide-react';
+import { UploadCloud, CheckCircle2, Loader2, AlertCircle, Mail } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 export default function ResumeUploader({ onUploadSuccess }: { onUploadSuccess: (data: any) => void }) {
   const [file, setFile] = useState<File | null>(null);
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -17,6 +18,11 @@ export default function ResumeUploader({ onUploadSuccess }: { onUploadSuccess: (
 
   const handleUpload = async () => {
     if (!file) return;
+    if (!isValidEmail(email)) {
+      setError('Enter a valid email address for job alerts.');
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
@@ -31,7 +37,7 @@ export default function ResumeUploader({ onUploadSuccess }: { onUploadSuccess: (
       const json = await parseApiResponse(res);
       if (!res.ok) throw new Error(json.error || 'Failed to upload');
       
-      onUploadSuccess({ ...json.data, rawText: json.rawText });
+      onUploadSuccess({ ...json.data, rawText: json.rawText, email: email.trim() });
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -75,6 +81,23 @@ export default function ResumeUploader({ onUploadSuccess }: { onUploadSuccess: (
         </div>
       </div>
 
+      <label className="block mt-6">
+        <span className="text-sm font-medium text-gray-300 flex items-center gap-2 mb-2">
+          <Mail className="w-4 h-4 text-cyan-400" />
+          Email for job alerts
+        </span>
+        <input
+          type="email"
+          value={email}
+          onChange={(event) => {
+            setEmail(event.target.value);
+            setError(null);
+          }}
+          placeholder="you@example.com"
+          className="w-full rounded-xl border border-gray-700 bg-gray-950/70 px-4 py-3 text-white placeholder:text-gray-600 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
+        />
+      </label>
+
       {error && (
         <div className="mt-4 p-4 bg-red-900/20 border border-red-900/50 rounded-lg flex items-start text-red-400 text-sm">
           <AlertCircle className="w-5 h-5 mr-3 flex-shrink-0 mt-0.5" />
@@ -98,6 +121,10 @@ export default function ResumeUploader({ onUploadSuccess }: { onUploadSuccess: (
       </button>
     </motion.div>
   );
+}
+
+function isValidEmail(value: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
 async function parseApiResponse(res: Response) {

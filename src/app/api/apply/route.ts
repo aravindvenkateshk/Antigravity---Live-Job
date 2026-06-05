@@ -23,7 +23,7 @@ export async function POST(req: NextRequest) {
       coverLetter = response.text || "Cover letter generation returned empty.";
     } catch (aiError: any) {
       console.error("Gemini Cover Letter Error:", aiError);
-      coverLetter = "Could not generate cover letter due to AI service high demand. You can apply manually.";
+      coverLetter = "Could not generate a cover letter right now. You can still open the live job link and apply manually.";
     }
 
     // Only run the headless bot for Full-Auto
