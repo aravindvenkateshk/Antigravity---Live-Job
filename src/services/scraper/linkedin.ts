@@ -4,9 +4,9 @@ function normalizeText(value: string) {
   return value.replace(/â€“/g, '-').replace(/â/g, "'").replace(/\s+/g, ' ').trim();
 }
 
-export async function scrapeLinkedInJobs(keyword: string, location: string) {
+export async function scrapeLinkedInJobs(keyword: string, location: string, offset: number = 0) {
   try {
-    const url = `https://www.linkedin.com/jobs/search?keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(location)}`;
+    const url = `https://www.linkedin.com/jobs/search?keywords=${encodeURIComponent(keyword)}&location=${encodeURIComponent(location)}&start=${offset}`;
     const res = await fetch(url, {
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',

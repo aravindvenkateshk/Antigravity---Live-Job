@@ -26,23 +26,38 @@ export default function Home() {
     setUserEmail(null);
   };
 
-  const handleUploadSuccess = async (data: any) => {
-    setProfileData(data);
+  const [jobOffset, setJobOffset] = useState(0);
+
+  const fetchJobs = async (offsetToFetch: number, data: any) => {
     setLoadingJobs(true);
     try {
       const keyword = data.domainExpertise || 'Software Engineer';
       const res = await fetch('/api/jobs/fetch', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ keyword, location: 'India', notificationEmail: data.email }),
+        body: JSON.stringify({ keyword, location: 'India', notificationEmail: data.email, offset: offsetToFetch }),
       });
       const json = await res.json();
-      if (json.success) setJobs(json.data);
+      if (json.success && json.data.length > 0) {
+        setJobs(json.data);
+      }
     } catch (err) {
       console.error('Failed to fetch jobs', err);
     } finally {
       setLoadingJobs(false);
     }
+  };
+
+  const handleUploadSuccess = async (data: any) => {
+    setProfileData(data);
+    setJobOffset(0);
+    await fetchJobs(0, data);
+  };
+
+  const handleRefresh = async () => {
+    const nextOffset = jobOffset + 15;
+    setJobOffset(nextOffset);
+    await fetchJobs(nextOffset, profileData);
   };
 
   return (
@@ -171,7 +186,7 @@ export default function Home() {
                 </p>
               </div>
             ) : (
-              <JobBoard jobs={jobs} profileData={profileData} userEmail={userEmail} />
+              <JobBoard jobs={jobs} profileData={profileData} userEmail={userEmail} onRefresh={handleRefresh} />
             )}
           </motion.div>
         )}

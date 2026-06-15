@@ -21,7 +21,8 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
-    const newJobs = await fetchAndStoreJobs(body.keyword, body.location);
+    const offset = Number(body.offset) || 0;
+    const newJobs = await fetchAndStoreJobs(body.keyword, body.location, offset);
     let notificationWarning: string | undefined;
 
     const notificationEmail = typeof body.notificationEmail === 'string'

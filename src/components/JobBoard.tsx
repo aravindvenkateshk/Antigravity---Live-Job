@@ -25,11 +25,12 @@ interface Props {
   jobs: Job[];
   profileData: any;
   userEmail?: string | null;
+  onRefresh?: () => void;
 }
 
 const LOCAL_KEY = (email: string) => `applied_jobs_${email}`;
 
-export default function JobBoard({ jobs, profileData, userEmail }: Props) {
+export default function JobBoard({ jobs, profileData, userEmail, onRefresh }: Props) {
   const [applyMode, setApplyMode] = useState<ApplyMode>('Semi-Auto');
   const [activeTab, setActiveTab] = useState<'open' | 'applied'>('open');
   const [activeJobUrl, setActiveJobUrl] = useState<string | null>(null);
@@ -221,7 +222,15 @@ export default function JobBoard({ jobs, profileData, userEmail }: Props) {
               <div className="text-center py-20 text-gray-500">
                 <CheckCheck className="w-12 h-12 mx-auto mb-3 text-emerald-500/40" />
                 <p className="text-lg font-medium text-gray-400">You&apos;ve applied to all listed jobs!</p>
-                <p className="text-sm mt-1">Check back later for new openings or scroll to your Applied tracker.</p>
+                <p className="text-sm mt-1 mb-6">Check back later for new openings or scroll to your Applied tracker.</p>
+                {onRefresh && (
+                  <button
+                    onClick={onRefresh}
+                    className="inline-flex items-center gap-2 bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30 border border-cyan-500/30 px-6 py-2.5 rounded-xl font-medium transition-colors"
+                  >
+                    <RefreshCw className="w-4 h-4" /> Load More Jobs
+                  </button>
+                )}
               </div>
             ) : (
               openJobs.map((job, idx) => {
@@ -325,6 +334,17 @@ export default function JobBoard({ jobs, profileData, userEmail }: Props) {
                   </motion.div>
                 );
               })
+            )}
+
+            {openJobs.length > 0 && onRefresh && (
+              <div className="text-center pt-8">
+                <button
+                  onClick={onRefresh}
+                  className="inline-flex items-center gap-2 bg-cyan-500/10 text-cyan-400 hover:bg-cyan-500/20 border border-cyan-500/30 px-6 py-2.5 rounded-xl font-medium transition-colors"
+                >
+                  <RefreshCw className="w-4 h-4" /> Load More Jobs
+                </button>
+              </div>
             )}
           </motion.div>
         )}
