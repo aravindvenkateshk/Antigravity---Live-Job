@@ -29,10 +29,12 @@ interface Props {
 }
 
 const LOCAL_KEY = (email: string) => `applied_jobs_${email}`;
+const PLATFORMS = ['All', 'LinkedIn', 'Naukri', 'Bayt', 'Monster', 'Shine', 'Gulf Jobs'];
 
 export default function JobBoard({ jobs, profileData, userEmail, onRefresh }: Props) {
   const [applyMode, setApplyMode] = useState<ApplyMode>('Semi-Auto');
   const [activeTab, setActiveTab] = useState<'open' | 'applied'>('open');
+  const [activePlatform, setActivePlatform] = useState<string>('All');
   const [activeJobUrl, setActiveJobUrl] = useState<string | null>(null);
   const [coverLetters, setCoverLetters] = useState<Record<string, string>>({});
   const [applyErrors, setApplyErrors] = useState<Record<string, string>>({});
@@ -93,8 +95,17 @@ export default function JobBoard({ jobs, profileData, userEmail, onRefresh }: Pr
   }, [userEmail, profileData?.email]);
 
   // ── Filter: open = not yet applied ──────────────────────────────────────────
-  const appliedUrls = new Set(appliedJobs.map((j) => j.url));
-  const openJobs = jobs.filter((j) => !appliedUrls.has(j.url));
+  // Unapplied jobs are those whose URL isn't in appliedJobs array
+  let openJobs = jobs.filter((j) => !appliedJobs.some((a) => a.url === j.url));
+  
+  if (activePlatform !== 'All') {
+    // If activePlatform is selected, check if job.platform matches, 
+    // OR if it's Adzuna and the company/location name contains the platform name (since Adzuna aggregates)
+    openJobs = openJobs.filter(j => 
+      j.platform?.toLowerCase().includes(activePlatform.toLowerCase()) || 
+      j.company?.toLowerCase().includes(activePlatform.toLowerCase())
+    );
+  }
 
   // ── Apply handler ───────────────────────────────────────────────────────────
   const handleApply = async (job: Job) => {
@@ -185,7 +196,7 @@ export default function JobBoard({ jobs, profileData, userEmail, onRefresh }: Pr
       </div>
 
       {/* ── Tab switcher ── */}
-      <div className="flex border-b border-gray-800 mb-6">
+      <div className="flex border-b border-gray-800 mb-6 px-6 pt-2">
         <button
           onClick={() => setActiveTab('open')}
           className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-colors ${
@@ -198,7 +209,7 @@ export default function JobBoard({ jobs, profileData, userEmail, onRefresh }: Pr
           <span className="bg-gray-800 text-gray-400 rounded-full px-2 py-0.5 text-xs">{openJobs.length}</span>
         </button>
         <button
-          onClick={() => { setActiveTab('applied'); loadApplied(); }}
+          onClick={() => setActiveTab('applied')}
           className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-colors ${
             activeTab === 'applied'
               ? 'border-emerald-500 text-emerald-400'
@@ -206,13 +217,28 @@ export default function JobBoard({ jobs, profileData, userEmail, onRefresh }: Pr
           }`}
         >
           <CheckCheck className="w-4 h-4" /> Applied
-          {appliedJobs.length > 0 && (
-            <span className="bg-emerald-500/20 text-emerald-400 rounded-full px-2 py-0.5 text-xs border border-emerald-500/30">
-              {appliedJobs.length}
-            </span>
-          )}
+          <span className="bg-gray-800 text-gray-400 rounded-full px-2 py-0.5 text-xs">{appliedJobs.length}</span>
         </button>
       </div>
+
+      {/* Platform Tabs (Pills) */}
+      {activeTab === 'open' && (
+        <div className="flex gap-2 overflow-x-auto px-6 pb-6 mb-2 no-scrollbar">
+          {PLATFORMS.map((platform) => (
+            <button
+              key={platform}
+              onClick={() => setActivePlatform(platform)}
+              className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all whitespace-nowrap border ${
+                activePlatform === platform 
+                  ? 'bg-cyan-500 text-black border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.3)]' 
+                  : 'bg-gray-900 text-gray-400 border-gray-800 hover:bg-gray-800 hover:text-gray-300'
+              }`}
+            >
+              {platform}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ── Open Roles Tab ── */}
       <AnimatePresence mode="wait">

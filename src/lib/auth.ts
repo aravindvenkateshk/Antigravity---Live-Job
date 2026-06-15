@@ -20,7 +20,7 @@ export interface AppliedJob {
 }
 
 function getJwtSecret(): string {
-  const secret = process.env.JWT_SECRET;
+  const secret = process.env.JWT_SECRET || process.env.Jw_Sec;
   if (!secret) throw new Error("JWT_SECRET is not set in environment variables.");
   return secret;
 }

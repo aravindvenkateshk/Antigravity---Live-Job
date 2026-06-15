@@ -1,7 +1,7 @@
 export async function scrapeAdzunaJobs(keyword: string, location: string, offset: number = 0) {
   try {
     const appId = process.env.ADZUNA_APP_ID;
-    const appKey = process.env.ADZUNA_APP_KEY;
+    const appKey = process.env.ADZUNA_APP_KEY || process.env.AduzaKey;
 
     if (!appId || !appKey) {
       console.warn('Adzuna credentials missing. Skipping Adzuna fetch.');
