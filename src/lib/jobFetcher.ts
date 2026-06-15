@@ -1,5 +1,5 @@
 import { scrapeLinkedInJobs } from '@/services/scraper/linkedin';
-import { scrapeNaukriJobs } from '@/services/scraper/naukri';
+import { scrapeAdzunaJobs } from '@/services/scraper/adzuna';
 
 export interface Job {
   title: string;
@@ -18,12 +18,12 @@ export async function fetchAndStoreJobs(keyword?: string, location?: string, off
   const searchKeyword = keyword || process.env.DEFAULT_JOB_KEYWORD || 'cybersecurity';
   const searchLocation = location || process.env.DEFAULT_JOB_LOCATION || 'India';
 
-  const [linkedinJobs, naukriJobs] = await Promise.all([
+  const [linkedinJobs, adzunaJobs] = await Promise.all([
     scrapeLinkedInJobs(searchKeyword, searchLocation, offset),
-    scrapeNaukriJobs(searchKeyword, searchLocation),
+    scrapeAdzunaJobs(searchKeyword, searchLocation, offset),
   ]);
 
-  const allJobs: Job[] = [...linkedinJobs, ...naukriJobs];
+  const allJobs: Job[] = [...linkedinJobs, ...adzunaJobs];
   // TODO: Persist to Prisma DB (e.g., await prisma.job.createMany({ data: allJobs }));
   return allJobs;
 }
