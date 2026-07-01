@@ -115,6 +115,11 @@ export default function JobBoard({ jobs, profileData, userEmail, onRefresh }: Pr
       return;
     }
 
+    const applicationTab = window.open('about:blank', '_blank');
+    if (applicationTab) {
+      applicationTab.document.write('<p style="font-family: sans-serif; padding: 24px;">Preparing your application...</p>');
+    }
+
     setActiveJobUrl(job.url);
     setApplyErrors((prev) => ({ ...prev, [job.url]: '' }));
 
@@ -145,13 +150,13 @@ export default function JobBoard({ jobs, profileData, userEmail, onRefresh }: Pr
       }
 
       // Always redirect when semi-auto or full-auto (auto-apply may have failed)
-      window.open(job.url, '_blank');
+      redirectToJob(applicationTab, job.url);
       markApplied(job);
 
     } catch (err: any) {
       // Even on error → redirect so the user can apply manually
       setApplyErrors((prev) => ({ ...prev, [job.url]: err.message || 'Could not prepare application. Redirecting you to apply manually…' }));
-      window.open(job.url, '_blank');
+      redirectToJob(applicationTab, job.url);
       markApplied(job);
     } finally {
       setActiveJobUrl(null);
@@ -439,4 +444,13 @@ export default function JobBoard({ jobs, profileData, userEmail, onRefresh }: Pr
       </AnimatePresence>
     </div>
   );
+}
+
+function redirectToJob(tab: Window | null, url: string) {
+  if (tab) {
+    tab.location.href = url;
+    return;
+  }
+
+  window.open(url, '_blank', 'noopener,noreferrer');
 }
